@@ -1,0 +1,40 @@
+kind: BuildConfig
+apiVersion: build.openshift.io/v1
+metadata:
+  name: "cru-puller-build"
+spec:
+  runPolicy: "Serial"
+  triggers:
+    - type: "GitHub"
+      github:
+        secret: "github-auth"
+    - type: "ImageChange"
+  source:
+    git:
+      uri: "https://github.com/honda-lde/cru-scraper"
+    sourceSecret:
+      name: "github-auth"
+    type: Git
+  strategy:
+    type: Source
+    sourceStrategy:
+      from:
+        kind: "ImageStreamTag"
+        name: "python:3.6"
+        namespace: openshift
+      env:
+        - name: "USERNAME"
+          valueFrom:
+            secretKeyRef:
+              name: cru-puller-secret
+              key: username
+        - name: "PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              name: cru-puller-secret
+              key: password
+  output:
+    to:
+      kind: "ImageStreamTag"
+      name: "cru-scraper-py:latest"
+

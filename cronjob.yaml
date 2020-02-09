@@ -1,0 +1,32 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: cru-puller
+  namespace: honda-labs-ci-cd
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: "Replace"
+  startingDeadlineSeconds: 200
+  suspend: true
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            job: "cru-puller-py"
+        spec:
+          containers:
+          - name: cru-puller
+            image: image-registry.openshift-image-registry.svc:5000/honda-labs-ci-cd/cru-scraper-py:latest
+            command: ["python", "cru_scraper.py"]
+            volumeMounts:
+            - mountPath: "/opt/app-root/src/data"
+              name: cru-pvc
+          volumes:
+            - name: cru-pvc
+              persistentVolumeClaim:
+                claimName: cru-data
+          restartPolicy: OnFailure
+
